@@ -14,7 +14,7 @@ if __name__ == '__main__':
         pop_size=3,
         max_evaluations=6,
         train_iters=50,
-        num_cores=3,
+        num_cores=8,
     )
     
     print('Best robot:')

@@ -245,15 +245,15 @@ class Job():
         #     group.add_job(save_robot_gif, gif_args, callback=dummy_callback)
         # group.run_jobs(NUM_PROC)
     
-GIF_RESOLUTION = (1280/5, 720/5)
+GIF_RESOLUTION = (1280/2, 720/2)
 # NUM_PROC = 8
 if __name__ == '__main__':
     exp_root = os.path.join('saved_data')
     save_dir = os.path.join(root_dir, 'saved_data', 'all_media')
 
     my_job = Job(
-        name = 'test_ga',
-        experiment_names= ['test_ga'],
+        name = 'test_cppn',
+        experiment_names= ['test_cppn'],
         env_names = ['Walker-v0'],
         ranks = [i for i in range(3)],
         load_dir = exp_root,
