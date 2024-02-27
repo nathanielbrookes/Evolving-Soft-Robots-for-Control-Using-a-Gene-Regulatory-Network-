@@ -14,7 +14,7 @@ world.add_from_array(
     name='robot', 
     structure=robot_structure, 
     x=3, 
-    y=1, 
+    y=1,
     connections=robot_connections)
 
 world.pretty_print()

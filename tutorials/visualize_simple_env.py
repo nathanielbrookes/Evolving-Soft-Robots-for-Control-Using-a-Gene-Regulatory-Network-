@@ -1,5 +1,5 @@
 import gym
-from evogym import sample_robot
+
 
 # import envs from the envs folder and register them
 import envs
