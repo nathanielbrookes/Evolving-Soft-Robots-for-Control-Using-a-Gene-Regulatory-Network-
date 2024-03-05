@@ -5,8 +5,9 @@ import gym
 from evogym import WorldObject
 
 class Robot:
-    def __init__(self, structure = None, controller = None):
+    def __init__(self, environment, structure = None, controller = None):
         self.fitness = 0
+        self.environment = environment
 
         # Create initial robot
         if structure is None:
@@ -22,14 +23,14 @@ class Robot:
         self.structure = structure
 
         # Get sizes of observation space and action space:
-        env = gym.make('DownStepper-v0', body=structure)
+        env = gym.make(self.environment, body=structure)
         self.observation_space = env.observation_space.shape[0]
         self.action_space = env.action_space.shape[0]
         env.close()
 
         if controller is None:
             # Create GRN controller
-            gene_count = self.observation_space + 32 + self.action_space
+            gene_count = self.observation_space + 64 + self.action_space
             controller = GRN.WatsonGRN(gene_count)
             controller.set_random_weights()
 

@@ -26,13 +26,13 @@ class WatsonGRN:
             if random.random() < 0.01:
                 # Remove connection
                 self.interaction_matrix[i] = 0
-            elif random.random() < 0.1:
+            elif random.random() < 0.15:
                 # Mutate connection
                 self.interaction_matrix[i] += random.uniform(-0.1, 0.1)
 
-            if (self.interaction_matrix[i] < -1):
+            if self.interaction_matrix[i] < -1:
                 self.interaction_matrix[i] = -1
-            elif (self.interaction_matrix[i] > 1):
+            elif self.interaction_matrix[i] > 1:
                 self.interaction_matrix[i] = 1
 
 
@@ -48,12 +48,11 @@ class WatsonGRN:
                 sum_of_activities += (self.interaction_matrix[m] * self.gene_potentials[j])
                 m += 1
 
-            self.phenotype[i] = (self.gene_potentials[i] + rate*math.tanh(sum_of_activities) - self.gene_potentials[i]*degradation_rate) * 0.55
-            # * 5/9 ?
+            self.phenotype[i] = (self.gene_potentials[i] + rate*math.tanh(sum_of_activities) - self.gene_potentials[i]*degradation_rate)
 
-            if (self.phenotype[i] < -1):
+            if self.phenotype[i] < -1:
                 self.phenotype[i] = -1
-            elif (self.phenotype[i] > 1):
+            elif self.phenotype[i] > 1:
                 self.phenotype[i] = 1
 
         self.gene_potentials = self.phenotype.copy()
