@@ -1,19 +1,22 @@
 import numpy as np
 import grn as GRN
 
+import random
 import gym
 from evogym import WorldObject
+import evogym.envs
 
 class Robot:
     def __init__(self, environment, structure = None, controller = None):
         self.fitness = 0
+
         self.environment = environment
 
         # Create initial robot
         if structure is None:
             # Loads 'speed_bot' fixed robot shape:
             robot_object = WorldObject.from_json("speed_bot.json")
-            structure = robot_object.get_structure()
+            structure = [robot_object.get_structure(), robot_object.get_connections()]
 
             """
             # Creates simple 2x3 robot made of horizontal actuators
@@ -23,14 +26,14 @@ class Robot:
         self.structure = structure
 
         # Get sizes of observation space and action space:
-        env = gym.make(self.environment, body=structure)
+        env = gym.make(self.environment, body=self.structure[0])
         self.observation_space = env.observation_space.shape[0]
         self.action_space = env.action_space.shape[0]
         env.close()
 
         if controller is None:
             # Create GRN controller
-            gene_count = self.observation_space + 64 + self.action_space
+            gene_count = self.observation_space + 32 + self.action_space
             controller = GRN.WatsonGRN(gene_count)
             controller.set_random_weights()
 
@@ -38,7 +41,7 @@ class Robot:
 
         """
         # Calculate action space (by summing actuators)
-        unique, counts = np.unique(self.structure, return_counts=True)
+        unique, counts = np.unique(self.structure[0], return_counts=True)
         occurrences = dict(zip(unique, counts))
         if 3 in occurrences:
             self.action_space += occurrences[3]
@@ -61,6 +64,7 @@ class Robot:
 
         for i in range(len(inputs)):
             self.controller.gene_potentials[i] = inputs[i]
+            #self.controller.gene_potentials[i] = random.uniform(-0.01, 0.01)
 
     def set_fitness(self, fitness):
         self.fitness = fitness

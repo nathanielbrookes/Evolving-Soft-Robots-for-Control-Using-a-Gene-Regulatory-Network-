@@ -2,6 +2,7 @@ import gym
 from evogym.utils import get_full_connectivity
 
 import evogym.envs
+import random
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
@@ -12,12 +13,16 @@ import json
 from ga import GeneticAlgorithm
 
 if __name__ == '__main__':
+    seed = 0
+    random.seed(seed)
+    np.random.seed(seed)
+
     parameters = {
         'pop_size': 25,
-        'max_generations': 1000,
+        'max_generations': 10000,
         'train_iterations': 500,
         'environment': 'Walker-v0',
-        'folder_name': 'test5'
+        'folder_name': 'test11'
     }
 
     # Create folder to store experiment data and results
