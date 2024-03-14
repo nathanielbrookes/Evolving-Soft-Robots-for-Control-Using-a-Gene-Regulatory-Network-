@@ -4,6 +4,7 @@ import os
 import numpy as np
 import multiprocessing
 import time
+import random
 
 from group_grn import SimJob, run_group_grn
 from robot import Robot
@@ -21,7 +22,7 @@ class GeneticAlgorithm:
         self.population = []
 
         # Get sizes of observation space and action space:
-        env = gym.make(environment, body=Robot(self.environment).structure)
+        env = gym.make(environment, body=Robot(self.environment).structure[0])
         print(f'Observation Space = {env.observation_space.shape[0]}')
         print(f'Action Space = {env.action_space.shape[0]}')
         env.close()
@@ -43,10 +44,26 @@ class GeneticAlgorithm:
             if not os.path.exists(generation_path):
                 os.makedirs(generation_path)
 
+            # Create subfolders for each generation structure and controller
+            structure_path = os.path.join(generation_path, 'structure')
+            if not os.path.exists(structure_path):
+                os.makedirs(structure_path)
+            controller_path = os.path.join(generation_path, 'controller')
+            if not os.path.exists(controller_path):
+                os.makedirs(controller_path)
+
             sim_jobs = []
 
             # Add current population as sim jobs (enables multiprocessing!!)
-            for robot in self.population:
+            for i, robot in enumerate(self.population):
+                # Save robot structure and connections array
+                temp_path = os.path.join(structure_path, f'{i}.npz')
+                np.savez(temp_path, robot.structure[0], robot.structure[1])
+
+                # Save robot GRN controller (defined by gene_count and interaction_matrix)
+                temp_path = os.path.join(controller_path, f'{i}.npz')
+                np.savez(temp_path, robot.controller.gene_count, robot.controller.interaction_matrix)
+
                 sim_jobs.append(SimJob(robot, self.train_iterations, self.environment))
 
             process_count = multiprocessing.cpu_count()
@@ -74,7 +91,7 @@ class GeneticAlgorithm:
             np.savetxt(os.path.join(generation_path, 'output.csv'), a, delimiter=",")
 
             # Visualise best robot
-            """env = gym.make(self.environment, body=ordered_population[0].structure)
+            """env = gym.make(self.environment, body=ordered_population[0].structure[0])
             env.reset()
             t = 0
             while t < self.train_iterations:
@@ -98,20 +115,24 @@ class GeneticAlgorithm:
 
             env.close()"""
 
-            survivors = int(0.2 * self.pop_size)
-
-            # Add best ~ 20% of robots to new population
+            # Add best ~ 50% of robots to new population
+            survivors = int(0.5 * self.pop_size)
             new_population = ordered_population[:survivors]
 
             # Replace remaining spaces with offspring
             while len(new_population) < self.pop_size:
                 # Select best robot for parent
-                parent_robot = ordered_population.pop(0)
+                parent_one = ordered_population.pop(0)
 
-                # Create new robot with mutated parent controller:
+                # Select random robot for parent
+                parent_two = random.sample(ordered_population, 1)[0]
+
+                # Perform crossover to get child controller
+                child_grn = GRN.CrossoverGRN(parent_one.controller, parent_two.controller)
+
+                # Create new robot with mutated child controller:
                 child_robot = Robot(self.environment)
-                child_robot.controller = GRN.WatsonGRN(parent_robot.controller.gene_count)
-                child_robot.controller.interaction_matrix = parent_robot.controller.interaction_matrix.copy()
+                child_robot.controller = child_grn
                 child_robot.controller.mutate_weights()
 
                 # Add mutated child to the new population
