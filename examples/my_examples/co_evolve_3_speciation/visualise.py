@@ -11,10 +11,10 @@ import evogym.envs
 
 if __name__ == '__main__':
     environment = 'Walker-v0'
-    exp_name = 'Walker-v0_co_evolve_test10'
+    exp_name = 'Walker-v0_co_evolve_test9'
     container_shape = (5, 5)
-    generation = 35
-    robot = 1
+    generation = 270
+    robot = 0
     train_iterations = 500
 
     exp_path = os.path.join('experiment_data', exp_name, f'generation_{generation}')
@@ -23,20 +23,32 @@ if __name__ == '__main__':
         print('ERROR: Could not find experiment!')
         exit()
     else:
-        controller_path = os.path.join(exp_path, 'controller', f'{robot}.npz')
-        structure_path = os.path.join(exp_path, 'structure', f'{robot}.npz')
-
+        fitness_scores = []
+        robot_indices = []
+        # Load output data
+        output_file = os.path.join(exp_path, 'output.csv')
+        if not os.path.exists(output_file):
+            print('ERROR: Could not find experiment output.csv file!')
+            exit()
+        else:
+            output = np.loadtxt(output_file, delimiter=',')
+            fitness_score = output[:, 0][robot]
+            robot_index = int(output[:, 1][robot])
+            
+            controller_path = os.path.join(exp_path, 'controller', f'{robot_index}.npz')
+            structure_path = os.path.join(exp_path, 'structure', f'{robot_index}.npz')
+        
         if not os.path.exists(controller_path) or not os.path.exists(structure_path):
             print('ERROR: Could not find experiment structure and controller files!')
             exit()
         else:
             # Load structure data
-            """structure_data = np.load(structure_path)
+            structure_data = np.load(structure_path)
             structure = []
             for key, value in structure_data.items():
                 structure.append(value)
             structure = tuple(structure)
-            structure, connections = structure"""
+            structure, connections = structure
 
             # Load controller data
             controller_data = np.load(controller_path)
@@ -58,8 +70,11 @@ if __name__ == '__main__':
 
             total_reward = 0
 
+            print(structure)
+
+
             # Visualise robot
-            env = gym.make(environment, body=robot.get_structure()[0])
+            env = gym.make(environment, body=structure)
             env.reset()
             t = 0
             while t < train_iterations:

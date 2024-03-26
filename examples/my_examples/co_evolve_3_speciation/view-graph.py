@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 
 if __name__ == '__main__':
-    exp_name = 'Walker-v0_co_evolve_test8'
+    exp_name = 'Walker-v0_co_evolve_test9'
 
     exp_path = os.path.join('experiment_data', exp_name)
 

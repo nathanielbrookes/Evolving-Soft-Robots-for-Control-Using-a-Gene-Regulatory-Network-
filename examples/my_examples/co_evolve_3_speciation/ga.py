@@ -25,6 +25,7 @@ class GeneticAlgorithm:
         self.is_continuing = is_continuing
 
         self.population = []
+        self.groups = {}
 
         if not self.is_continuing:
             # Create an initial population of random robots:
@@ -251,19 +252,43 @@ class GeneticAlgorithm:
             agg = AgglomerativeClustering(n_clusters=cluster_size, affinity='precomputed', linkage='complete', distance_threshold=None)
             class_labels = agg.fit_predict(similarity_matrix)
 
-            groups = {}
+            """best_previous_performers = {}
+            # NEW - Group Elitism: Each group's best performer is copied automatically in the next if it is better than the previous!
+            for i in range(len(class_labels)):
+                group = class_labels[i]
+                if group in self.groups:
+                    best_previous_performers[group] = self.groups[group][0]"""
+            
+            self.groups = {}
             for i in range(cluster_size):
-                groups[i] = []
+                self.groups[i] = []
 
+            new_population = []
             # Copy robot into its group
             for i in range(len(class_labels)):
                 group = class_labels[i]
-                groups[group].append(ordered_population_no_extremes[i])
+                
+                self.groups[group].append(ordered_population_no_extremes[i])
+                
+                """if i == 0:
+                    if group in best_previous_performers:
+                        if best_previous_performers[group].fitness > ordered_population_no_extremes[i].fitness:
+                            # Create new robot with mutated child controller:
+                            elite = best_previous_performers[group]
+                            elite_grn = GRN.WatsonGRN(elite.controller.gene_count)
+                            elite_grn.interaction_matrix = elite.controller.interaction_matrix.copy()
+                            elite_robot = Robot(elite.container_shape, elite_grn)
+                            new_population.append(elite_robot)
+                        else:
+                            self.groups[group].append(ordered_population_no_extremes[i])
+                    else:
+                        self.groups[group].append(ordered_population_no_extremes[i])
+                else:
+                    self.groups[group].append(ordered_population_no_extremes[i])"""
                 
             for i in range(cluster_size):
-                print(f'Group {i}: {len(groups[i])}')
-
-            new_population = []
+                print(f'Group {i}: {len(self.groups[i])}')
+            
             # Replace remaining spaces with offspring
             while len(new_population) < self.pop_size:
                 if random.random() < 0.8:
@@ -292,14 +317,14 @@ class GeneticAlgorithm:
                         # Select random robots for parents:
 
                         # Select 2 random groups for cross-group parent selection
-                        group_one, group_two = random.sample(list(groups), 2)
+                        group_one, group_two = random.sample(list(self.groups), 2)
 
                         # Select random robot from group one for first parent (tournament size = 5)
-                        group_one_candidates = random.sample(groups[group_one], min(5, len(groups[group_one])))
+                        group_one_candidates = random.sample(self.groups[group_one], min(5, len(self.groups[group_one])))
                         parent_one = max(group_one_candidates, key=attrgetter('fitness'))
 
                         # Select random robot from group two for second parent (tournament size = 5)
-                        group_two_candidates = random.sample(groups[group_two], min(5, len(groups[group_two])))
+                        group_two_candidates = random.sample(self.groups[group_two], min(5, len(self.groups[group_two])))
                         parent_two = max(group_two_candidates, key=attrgetter('fitness'))
 
                         # Perform crossover to get child controller

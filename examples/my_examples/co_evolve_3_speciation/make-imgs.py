@@ -11,7 +11,7 @@ if __name__ == '__main__':
     environment = 'Walker-v0'
     exp_name = 'Walker-v0_co_evolve_test8'
     container_shape = (5, 5)
-    generation = 0
+    generation = 271
 
     exp_path = os.path.join('experiment_data', exp_name, f'generation_{generation}')
 

@@ -197,17 +197,38 @@ def CalculateSimilarityBetween(robot_one, robot_two):
     if not (robot_one_body.shape == robot_two_body.shape):
         return 0.0
     else:
+        # Calculate absolute similary:
+        absolute_similarity = 0
+        
         matching_voxels = 0
         total_voxels = robot_one_body.shape[0]*robot_one_body.shape[1]
 
         robot_one_voxels = robot_one_body.flatten()
         robot_two_voxels = robot_two_body.flatten()
+        
+        robot_voxels_size = len(robot_one_voxels)
 
-        for i in range(len(robot_one_voxels)):
+        for i in range(robot_voxels_size):
             if robot_one_voxels[i] == robot_two_voxels[i]:
                 matching_voxels += 1
+                
+        absolute_similarity = matching_voxels/total_voxels
+        
+        # Calculate shape similary:
+        shape_similarity = 0
+        
+        robot_one_shape_size = robot_voxels_size - np.count_nonzero(robot_one_voxels==0)
+        robot_two_shape_size = robot_voxels_size - np.count_nonzero(robot_two_voxels==0)
+        
+        robot_one_shape = robot_one_voxels[robot_one_voxels > 0] = 1
+        robot_two_shape = robot_one_voxels[robot_two_shape > 0] = 1
+        
+        robot_combined_shape = np.logical_and(robot_one_voxels, robot_two_voxels)
+        robot_combined_shape_size = robot_voxels_size - np.count_nonzero(robot_combined_shape==0)
+        
+        shape_similarity = robot_combined_shape_size / max(robot_one_shape_size, robot_two_shape_size)
 
-        return 1-(matching_voxels/total_voxels)
+        return 1-(absolute_similarity*0.5 + shape_similarity*0.5)
 
 
 # Calculates the similarity matrix between all robots

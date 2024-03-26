@@ -18,7 +18,7 @@ if __name__ == '__main__':
         'max_generations': 10000,
         'train_iterations': 500,
         'environment': 'Walker-v0',
-        'folder_name': 'co_evolve_test8'
+        'folder_name': 'co_evolve_test9'
     }
     
     seed = parameters['seed']
