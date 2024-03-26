@@ -139,21 +139,21 @@ class RobotVoxel:
                     # Attempt to divide voxel horizontally
                     if direction_value < 0:
                         # Attempt to divide voxel to left
-                        if col-1 > 0 and (col-1, row) not in self.robot.voxels:
+                        if col-1 >= 0 and (col-1, row) not in self.robot.voxels:
                             self.robot.voxels[(col-1, row)] = RobotVoxel((col-1, row), self.robot)
                     else:
                         # Attempt to divide voxel to right
-                        if col+1 < self.robot.container_shape[0]-1 and (col+1, row) not in self.robot.voxels:
+                        if col+1 <= self.robot.container_shape[0]-1 and (col+1, row) not in self.robot.voxels:
                             self.robot.voxels[(col+1, row)] = RobotVoxel((col+1, row), self.robot)
                 else:
                     # Attempt to divide vertically
                     if direction_value < 0:
                         # Attempt to divide voxel up
-                        if row-1 > 0 and (col, row-1) not in self.robot.voxels:
+                        if row-1 >= 0 and (col, row-1) not in self.robot.voxels:
                             self.robot.voxels[(col, row-1)] = RobotVoxel((col, row-1), self.robot)
                     else:
                         # Attempt to divide voxel down
-                        if row+1 < self.robot.container_shape[1]-1 and (col, row+1) not in self.robot.voxels:
+                        if row+1 <= self.robot.container_shape[1]-1 and (col, row+1) not in self.robot.voxels:
                             self.robot.voxels[(col, row+1)] = RobotVoxel((col, row+1), self.robot)
 
             if self.divide_attempts <= 0:

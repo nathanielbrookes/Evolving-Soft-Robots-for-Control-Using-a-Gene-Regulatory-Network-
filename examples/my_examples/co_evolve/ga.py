@@ -5,6 +5,7 @@ import numpy as np
 import multiprocessing
 import time
 import random
+from operator import attrgetter
 
 from group_grn import SimJob, run_group_grn
 from robot import Robot
@@ -12,116 +13,263 @@ import grn as GRN
 
 
 class GeneticAlgorithm:
-    def __init__(self, shape, pop_size, generations, train_iterations, environment, experiment_dir):
+    def __init__(self, shape, pop_size, generations, train_iterations, environment, experiment_dir, start_gen, is_continuing):
         self.shape = shape
         self.pop_size = pop_size
         self.generations = generations
         self.train_iterations = train_iterations
         self.environment = environment
         self.experiment_dir = experiment_dir
+        self.start_gen = start_gen
+        self.is_continuing = is_continuing
 
         self.population = []
 
-        # Create an initial population of random robots:
-        # Robots are defined by structure of connections (design) and GRN (controller)
-        for i in range(pop_size):
-            robot = Robot(self.shape)
-            self.population.append(robot)
+        if not self.is_continuing:
+            # Create an initial population of random robots:
+            # Robots are defined by structure of connections (design) and GRN (controller)
+            for i in range(pop_size):
+                robot = Robot(self.shape)
+                self.population.append(robot)
+
+        else:
+            exp_path = os.path.join(experiment_dir, f'generation_{self.start_gen}')
+            if not os.path.exists(exp_path):
+                print('ERROR: Could not find experiment!')
+                exit()
+            else:
+                population = []
+                fitness_scores = []
+                # Load fitness scores
+                fitness_scores_file = os.path.join(exp_path, 'output.csv')
+                if not os.path.exists(fitness_scores_file):
+                    print('ERROR: Could not find experiment fitness scores!')
+                    exit()
+                else:
+                    fitness_scores = np.loadtxt(fitness_scores_file, delimiter=',')
+
+                # Load population from existing generation to start next generation
+                for i in range(self.pop_size):
+                    controller_path = os.path.join(exp_path, 'controller', f'{i}.npz')
+                    structure_path = os.path.join(exp_path, 'structure', f'{i}.npz')
+
+                    if not os.path.exists(controller_path) or not os.path.exists(structure_path):
+                        print('ERROR: Could not find experiment structure and controller files!')
+                        exit()
+                    else:
+                        # Load controller data
+                        controller_data = np.load(controller_path)
+                        controller = []
+                        for key, value in controller_data.items():
+                            controller.append(value)
+                        controller = tuple(controller)
+                        gene_count, interaction_matrix = controller
+                        robot_controller = GRN.WatsonGRN(gene_count)
+                        robot_controller.interaction_matrix = interaction_matrix
+
+                        robot = Robot(self.shape, robot_controller)
+                        robot.set_fitness(fitness_scores[i])
+                        population.append(robot)
+
+                self.population = population
 
     def start(self):
         g = 0
+
+        if self.is_continuing:
+            g = self.start_gen
+
         while g < self.generations:
-            print('Generation ' + str(g))
+            if not self.is_continuing:
+                print('Generation ' + str(g))
 
-            # Create subfolder for each generation
-            generation_path = f'{self.experiment_dir}/generation_{g}'
-            if not os.path.exists(generation_path):
-                os.makedirs(generation_path)
+                # Create subfolder for each generation
+                generation_path = f'{self.experiment_dir}/generation_{g}'
+                if not os.path.exists(generation_path):
+                    os.makedirs(generation_path)
 
-            # Create subfolders for each generation structure and controller
-            structure_path = os.path.join(generation_path, 'structure')
-            if not os.path.exists(structure_path):
-                os.makedirs(structure_path)
-            controller_path = os.path.join(generation_path, 'controller')
-            if not os.path.exists(controller_path):
-                os.makedirs(controller_path)
+                # Create subfolders for each generation structure and controller
+                structure_path = os.path.join(generation_path, 'structure')
+                if not os.path.exists(structure_path):
+                    os.makedirs(structure_path)
+                controller_path = os.path.join(generation_path, 'controller')
+                if not os.path.exists(controller_path):
+                    os.makedirs(controller_path)
 
-            sim_jobs = []
+                sim_jobs = []
 
-            # Add current population as sim jobs (enables multiprocessing!!)
-            for i, robot in enumerate(self.population):
-                sim_jobs.append(SimJob(robot, self.train_iterations, self.environment, generation_path, i))
+                # Add current population as sim jobs (enables multiprocessing!!)
+                for i, robot in enumerate(self.population):
+                    sim_jobs.append(SimJob(robot, self.train_iterations, self.environment, generation_path, i))
 
-            process_count = multiprocessing.cpu_count()
-            start = time.perf_counter()
-            run_data = run_group_grn(sim_jobs, process_count)
-            finish = time.perf_counter()
-            print(f'Finished in {round(finish - start, 2)} second(s)')
+                process_count = multiprocessing.cpu_count()
+                start = time.perf_counter()
+                run_data = run_group_grn(sim_jobs, process_count)
+                finish = time.perf_counter()
+                print(f'Finished in {round(finish - start, 2)} second(s)')
 
-            self.population = []
-            for result in run_data:
-                self.population.append(result.robot)
+                self.population = []
+                for result in run_data:
+                    self.population.append(result.robot)
 
-            # Order population of robots according to fitness
-            ordered_population = sorted(self.population, key=lambda x: x.fitness, reverse=True)
+                # Order population of robots according to fitness
+                ordered_population = sorted(self.population, key=lambda x: x.fitness, reverse=True)
 
-            for n, robot in enumerate(ordered_population, start=1):
-                print(str(n) + ') ' + str(robot.fitness))
+                for n, robot in enumerate(ordered_population, start=1):
+                    print(str(n) + ') ' + str(robot.fitness))
 
-            # Save fitness data to file
-            output = []
-            for robot in ordered_population:
-                output.append(robot.fitness)
+                    # Save robot GRN controller (defined by gene_count and interaction_matrix)
+                    controller_path = os.path.join(generation_path, 'controller')
+                    temp_path = os.path.join(controller_path, f'{n}.npz')
+                    np.savez(temp_path, robot.controller.gene_count, robot.controller.interaction_matrix)
 
-            a = np.asarray(output)
-            np.savetxt(os.path.join(generation_path, 'output.csv'), a, delimiter=",")
+                    # Save robot structure and connections array
+                    structure_path = os.path.join(generation_path, 'structure')
+                    temp_path = os.path.join(structure_path, f'{n}.npz')
+                    structure = robot.get_structure()
+                    np.savez(temp_path, structure[0], structure[1])
 
-            # Visualise best robot
-            """env = gym.make(self.environment, body=ordered_population[0].structure[0])
-            env.reset()
-            t = 0
-            while t < self.train_iterations:
-                # Step robot
-                ordered_population[0].step()
+                # Save fitness data to file
+                output = []
+                for robot in ordered_population:
+                    output.append(robot.fitness)
 
-                # Maps robot actuator values to the actuators
-                action = ordered_population[0].get_actuator_values()
+                a = np.asarray(output)
+                np.savetxt(os.path.join(generation_path, 'output.csv'), a, delimiter=",")
 
-                ob, reward, done, info = env.step(action)
+                # Visualise best robot
+                """env = gym.make(self.environment, body=ordered_population[0].structure[0])
+                env.reset()
+                t = 0
+                while t < self.train_iterations:
+                    # Step robot
+                    ordered_population[0].step()
+    
+                    # Maps robot actuator values to the actuators
+                    action = ordered_population[0].get_actuator_values()
+    
+                    ob, reward, done, info = env.step(action)
+    
+                    # Map observations to the inputs
+                    ordered_population[0].set_inputs(ob)
+    
+                    env.render()
+    
+                    t += 1
+    
+                    if done:
+                        env.reset()
+    
+                env.close()"""
 
-                # Map observations to the inputs
-                ordered_population[0].set_inputs(ob)
+            else:
+                print('Continuing Generation ' + str(g))
+                ordered_population = self.population
+                self.is_continuing = False
 
-                env.render()
+            """
+                Elitism Strategy
+                
+                # Add best ~ 50% of robots to new population
+                survivors = int(0.5 * self.pop_size)
+                new_population = ordered_population[:survivors]
+    
+                # Replace remaining spaces with offspring
+                while len(new_population) < self.pop_size:
+                    # Select best robot for parent
+                    parent_one = ordered_population.pop(0)
+    
+                    # Select random robot for parent
+                    parent_two = random.sample(ordered_population, 1)[0]
+    
+                    # Perform crossover to get child controller
+                    child_grn = GRN.CrossoverGRN(parent_one.controller, parent_two.controller)
+                    child_grn.mutate_weights()
+    
+                    # Create new robot with mutated child controller:
+                    child_robot = Robot(parent_one.container_shape, child_grn)
+    
+                    # Add mutated child to the new population
+                    new_population.append(child_robot)
+            """
 
-                t += 1
+            """
+            My Strategy 
+            
+            new_population = [ordered_population[0]]
+            
+            # Replace remaining spaces with offspring
+            while len(new_population) < self.pop_size:
+                if random.random() < 0.5:
+                    # Select random robot for parent (tournament size = 5)
+                    parents = random.sample(ordered_population, 5)
+                    parent = max(parents, key=attrgetter('fitness'))
 
-                if done:
-                    env.reset()
+                    # Create new robot with mutated child controller:
+                    child_grn = GRN.WatsonGRN(parent.controller.gene_count)
+                    child_grn.interaction_matrix = parent.controller.interaction_matrix.copy()
+                    child_grn.mutate_weights()
+                    child_robot = Robot(parent.container_shape, child_grn)
 
-            env.close()"""
+                    # Add mutated child to the new population
+                    new_population.append(child_robot)
 
-            # Add best ~ 50% of robots to new population
-            survivors = int(0.5 * self.pop_size)
-            new_population = ordered_population[:survivors]
+                else:
+                    # Select random robots for parents (tournament size = 5)
+                    parents = random.sample(ordered_population, 5)
+                    parent_one = max(parents, key=attrgetter('fitness'))
+                    parents = random.sample(ordered_population, 5)
+                    parent_two = max(parents, key=attrgetter('fitness'))
+
+                    # Perform crossover to get child controller
+                    child_grn = GRN.CrossoverGRN(parent_one.controller, parent_two.controller)
+                    child_grn.mutate_weights()
+
+                    # Create new robot with mutated child controller:
+                    child_robot = Robot(parent_one.container_shape, child_grn)
+
+                    # Add mutated child to the new population
+                    new_population.append(child_robot)
+            """
+
+            new_population = []
 
             # Replace remaining spaces with offspring
             while len(new_population) < self.pop_size:
-                # Select best robot for parent
-                parent_one = ordered_population.pop(0)
+                if random.random() < 0.8:
+                    # Crossover
 
-                # Select random robot for parent
-                parent_two = random.sample(ordered_population, 1)[0]
+                    # Select random robots for parents (tournament size = 8)
+                    parents = random.sample(ordered_population, 8)
+                    parent_one = max(parents, key=attrgetter('fitness'))
+                    parents = random.sample(ordered_population, 8)
+                    parent_two = max(parents, key=attrgetter('fitness'))
 
-                # Perform crossover to get child controller
-                child_grn = GRN.CrossoverGRN(parent_one.controller, parent_two.controller)
-                child_grn.mutate_weights()
+                    # Perform crossover to get child controller
+                    child_grn = GRN.CrossoverGRN(parent_one.controller, parent_two.controller)
+                    child_grn.mutate_weights()
 
-                # Create new robot with mutated child controller:
-                child_robot = Robot(parent_one.container_shape, child_grn)
+                    # Create new robot with mutated child controller:
+                    child_robot = Robot(parent_one.container_shape, child_grn)
 
-                # Add mutated child to the new population
-                new_population.append(child_robot)
+                    # Add mutated child to the new population
+                    new_population.append(child_robot)
+
+                else:
+                    # Mutation
+
+                    # Select random robot for parent (tournament size = 8)
+                    parents = random.sample(ordered_population, 8)
+                    parent = max(parents, key=attrgetter('fitness'))
+
+                    # Create new robot with mutated child controller:
+                    child_grn = GRN.WatsonGRN(parent.controller.gene_count)
+                    child_grn.interaction_matrix = parent.controller.interaction_matrix.copy()
+                    child_grn.mutate_weights()
+                    child_robot = Robot(parent.container_shape, child_grn)
+
+                    # Add mutated child to the new population
+                    new_population.append(child_robot)
 
             # Update population
             self.population = new_population

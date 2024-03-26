@@ -114,17 +114,6 @@ def RunGRN(robot, train_iters, env, generation_path, index):
         print('Robot has no actuators! - Returning -100 for fitness')
         return -100
 
-    # Save robot GRN controller (defined by gene_count and interaction_matrix)
-    controller_path = os.path.join(generation_path, 'controller')
-    temp_path = os.path.join(controller_path, f'{index}.npz')
-    np.savez(temp_path, robot.controller.gene_count, robot.controller.interaction_matrix)
-
-    # Save robot structure and connections array
-    structure_path = os.path.join(generation_path, 'structure')
-    temp_path = os.path.join(structure_path, f'{index}.npz')
-    structure = robot.get_structure()
-    np.savez(temp_path, structure[0], structure[1])
-
     env = gym.make(env, body=robot.get_structure()[0])
     env.reset()
 
