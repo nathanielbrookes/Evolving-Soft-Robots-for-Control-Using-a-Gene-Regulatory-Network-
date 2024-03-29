@@ -14,11 +14,10 @@ import grn as GRN
 
 
 class GeneticAlgorithm:
-    def __init__(self, shape, pop_size, generations, train_iterations, environment, experiment_dir, start_gen, is_continuing):
+    def __init__(self, shape, pop_size, generations, environment, experiment_dir, start_gen, is_continuing):
         self.shape = shape
         self.pop_size = pop_size
         self.generations = generations
-        self.train_iterations = train_iterations
         self.environment = environment
         self.experiment_dir = experiment_dir
         self.start_gen = start_gen
@@ -116,7 +115,7 @@ class GeneticAlgorithm:
 
                 # Add current population as sim jobs (enables multiprocessing!!)
                 for i, robot in enumerate(self.population):
-                    sim_jobs.append(SimJob(robot, self.train_iterations, self.environment, generation_path, i))
+                    sim_jobs.append(SimJob(robot, self.environment, generation_path, i))
 
                 process_count = multiprocessing.cpu_count()
                 start = time.perf_counter()

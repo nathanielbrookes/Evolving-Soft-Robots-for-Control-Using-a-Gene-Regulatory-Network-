@@ -103,7 +103,7 @@ def CrossoverGRN(parent_one, parent_two):
     return child_grn
 
 
-def RunGRN(robot, train_iters, env, generation_path, index):
+def RunGRN(robot, env, generation_path, index):
     """
     attempts = 10
     while True:
@@ -141,9 +141,10 @@ def RunGRN(robot, train_iters, env, generation_path, index):
 
     current_fitness = 0
     total_fitness = 0
-
+    
     t = 0
-    while t < train_iters:
+    finished = False
+    while not finished:
         # Maps robot actuator values to the actuators
         action = robot.get_actuator_values()
 
@@ -157,10 +158,12 @@ def RunGRN(robot, train_iters, env, generation_path, index):
         total_fitness += current_fitness
 
         # env.render()
-        t += 1
-
+        
         if done:
             env.reset()
+            finished = True
+        else:
+            t += 1
 
     env.close()
 

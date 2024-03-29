@@ -12,10 +12,9 @@ import grn as GRN
 
 
 class GeneticAlgorithm:
-    def __init__(self, pop_size, generations, train_iterations, environment, experiment_dir):
+    def __init__(self, pop_size, generations, environment, experiment_dir):
         self.pop_size = pop_size
         self.generations = generations
-        self.train_iterations = train_iterations
         self.environment = environment
         self.experiment_dir = experiment_dir
 
@@ -64,7 +63,7 @@ class GeneticAlgorithm:
                 temp_path = os.path.join(controller_path, f'{i}.npz')
                 np.savez(temp_path, robot.controller.gene_count, robot.controller.interaction_matrix)
 
-                sim_jobs.append(SimJob(robot, self.train_iterations, self.environment))
+                sim_jobs.append(SimJob(robot, self.environment))
 
             process_count = multiprocessing.cpu_count()
             start = time.perf_counter()

@@ -16,9 +16,8 @@ if __name__ == '__main__':
         'shape': (5, 5),
         'pop_size': 250,
         'max_generations': 10000,
-        'train_iterations': 500,
         'environment': 'Walker-v0',
-        'folder_name': 'co_evolve_test9'
+        'folder_name': 'co_evolve_test10'
     }
     
     seed = parameters['seed']
@@ -58,11 +57,9 @@ if __name__ == '__main__':
             json.dump(parameters, f)
 
     if is_continuing:
-        ga = GeneticAlgorithm(parameters['shape'], parameters['pop_size'], parameters['max_generations'],
-                              parameters['train_iterations'], parameters['environment'], exp_path, start_gen, True)
+        ga = GeneticAlgorithm(parameters['shape'], parameters['pop_size'], parameters['max_generations'], parameters['environment'], exp_path, start_gen, True)
     else:
-        ga = GeneticAlgorithm(parameters['shape'], parameters['pop_size'], parameters['max_generations'],
-                              parameters['train_iterations'], parameters['environment'], exp_path, start_gen, False)
+        ga = GeneticAlgorithm(parameters['shape'], parameters['pop_size'], parameters['max_generations'], parameters['environment'], exp_path, start_gen, False)
 
     print(f"Seed = {parameters['seed']}")
     ga.start()

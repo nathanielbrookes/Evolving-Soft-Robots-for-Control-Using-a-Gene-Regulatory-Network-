@@ -13,17 +13,18 @@ import json
 from ga import GeneticAlgorithm
 
 if __name__ == '__main__':
-    seed = 0
-    random.seed(seed)
-    np.random.seed(seed)
-
     parameters = {
+        'seed': random.randint(0, 1E6),
+        'shape': (5, 5),
         'pop_size': 25,
         'max_generations': 10000,
-        'train_iterations': 500,
         'environment': 'Walker-v0',
-        'folder_name': 'test11'
+        'folder_name': 'test13'
     }
+    
+    seed = parameters['seed']
+    random.seed(seed)
+    np.random.seed(seed)
 
     # Create folder to store experiment data and results
     experiment_name = parameters['environment'] + '_' + parameters['folder_name']
@@ -46,7 +47,7 @@ if __name__ == '__main__':
     with open(parameters_file, 'w') as f:
         json.dump(parameters, f)
 
-    ga = GeneticAlgorithm(parameters['pop_size'], parameters['max_generations'], parameters['train_iterations'], parameters['environment'], exp_path)
+    ga = GeneticAlgorithm(parameters['pop_size'], parameters['max_generations'], parameters['environment'], exp_path)
     ga.start()
 
 # connections = get_full_connectivity(body)

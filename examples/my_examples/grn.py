@@ -102,15 +102,16 @@ def CrossoverGRN(parent_one, parent_two):
     return child_grn
 
 
-def RunGRN(robot, train_iters, env):
-    env = gym.make(env, body=robot.get_structure()[0])
+def RunGRN(robot, env):
+    env = gym.make(env, body=robot.structure[0])
     env.reset()
 
     current_fitness = 0
     total_fitness = 0
 
     t = 0
-    while t < train_iters:
+    finished = False
+    while not finished:
         # Step robot
         robot.step()
 
@@ -127,10 +128,12 @@ def RunGRN(robot, train_iters, env):
         total_fitness += current_fitness
 
         # env.render()
-        t += 1
-
+        
         if done:
             env.reset()
+            finished = True
+        else:
+            t += 1
 
     env.close()
 
