@@ -1,102 +1,13 @@
-# Evolution Gym
+# Evolving Soft Robots For Control Using a Gene Regulatory Network
 
-A large-scale benchmark for co-optimizing the design and control of soft robots. As seen in [Evolution Gym: A Large-Scale Benchmark for Evolving Soft Robots](https://evolutiongym.github.io/) (**NeurIPS 2021**).
+This repository contains the Python code which accompanies my BSc Computer Science Dissertation, where I investigated how soft robots could be controlled and designed by an evolved Gene Regulatory Network (GRN) to complete locomotion and object-manipulation tasks.
 
-[//]: # (<img src="images/teaser.gif" alt="teaser" width="800"/>)
-![teaser](images/teaser.gif)
+For this research project, I used [EvoGym](https://evolutiongym.github.io/) to simulate Voxel-based Soft Robots (VSR). I also designed and implemented a developmental model and a decentralised controller in Python that uses a GRN to both design the robot's architecture and control its movements. In my application, populations of GRNs are evolved with an Evolutionary Algorithm, which I implemented with Python's multiprocessing library to take advantage of performing fitness evaluations in parallel on multiple CPU cores.
 
-# Installation
+## Project Structure
 
-Clone the repo and submodules:
+This repository was forked from [EvoGym](https://github.com/EvolutionGym/evogym) so that my classes and methods can be integrated within EvoGym's simulator. My methods can be found under the "gene_regulatory_network" directory. Within this directory are three folders, each representing a different major iteration in the project's development:
 
-```shell
-git clone --recurse-submodules https://github.com/EvolutionGym/evogym.git
-```
-
-### Requirements
-
-* Python 3.7/3.8
-* Linux, macOS, or Windows with [Visual Studios 2017](https://visualstudio.microsoft.com/vs/older-downloads/)
-* [OpenGL](https://www.opengl.org//)
-* [CMake](https://cmake.org/download/)
-* [PyTorch](http://pytorch.org/)
-
-<!--- (See [installation instructions](#opengl-installation-on-unix-based-systems) on Unix based systems) --->
-
-On **Linux only**:
-
-```shell
-sudo apt-get install xorg-dev libglu1-mesa-dev
-```
-
-Either install Python dependencies with conda:
-
-```shell
-conda env create -f environment.yml
-conda activate evogym
-```
-
-or with pip:
-
-```shell
-pip install -r requirements.txt
-```
-
-### Build and Install Package
-
-To build the C++ simulation, build all the submodules, and install `evogym` run the following command:
-
-```shell
-python setup.py install
-``` 
-
-### Test Installation
-
-cd to the `examples` folder and run the following script:
-
-```shell
-python gym_test.py
-```
-
-This script creates a random `5x5` robot in the `Walking-v0` environment. The robot is taking random actions. A window should open with a visualization of the environment -- kill the process from the terminal to close it.
-
-<!--### OpenGL installation on Unix-based systems
-
-To install OpenGL via [homebrew](https://brew.sh/), run the following commands:
-
-```shell
-brew install glfw
-```
---->
-
-# Usage
-
-## Examples
-
-To see example usage as well as to run co-design and control optimization experiments in EvoGym, please see the `examples` folder and its `README`.
-
-## Tutorials
-
-You can find tutorials for getting started with the codebase on our [website](https://evolutiongym.github.io/tutorials). Completed code from all tutorials is also available in the `tutorials` folder.
-
-## Docs
-
-You can find documentation on our [website](https://evolutiongym.github.io/documentation).
-
-## Design Tool
-
-For instructions on how to use the Evolution Gym Design Tool, please see [this repo](https://github.com/EvolutionGym/evogym-design-tool).
-
-# Citation
-
-If you find our repository helpful to your research, please cite our paper:
-
-```
-@article{bhatia2021evolution,
-  title={Evolution gym: A large-scale benchmark for evolving soft robots},
-  author={Bhatia, Jagdeep and Jackson, Holly and Tian, Yunsheng and Xu, Jie and Matusik, Wojciech},
-  journal={Advances in Neural Information Processing Systems},
-  volume={34},
-  year={2021}
-}
-```
+- **gene_regulatory_network\initial** - Contains the initial code for conducting evolutionary experiments using a GRN to optimise the robot's movements with fixed designs.
+- **gene_regulatory_network\refinement pt.1** - Contains the code for the first refinement iteration, which builds upon the previous implementation to improve the model's results. This contains an updated Evolutionary Algorithm which implements a crossover operator to combine genetic information from parents, and Tournament Selection to select the best candidates. Experiments for this iteration are still concerned with optimising the robot's controller only.
+- **gene_regulatory_network\refinement pt.2 (co-evolution)** - Contains the code for the final iteration of the project, where a different approach is considered to improve the model's performance. This includes an implementation of a developmental model and a decentralised controller, which allows the GRN to be co-evolved to both control the robot's behaviour and specify its design.
