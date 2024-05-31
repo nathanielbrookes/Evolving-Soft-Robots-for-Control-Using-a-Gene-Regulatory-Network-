@@ -1,5 +1,7 @@
 # Evolving Soft Robots For Control Using a Gene Regulatory Network
 
+<img src='screenshot.png' alt='Image of soft robots evolved with a GRN' width='500' />
+
 This repository contains the Python code which accompanies my BSc Computer Science Dissertation, where I investigated how soft robots could be controlled and designed by an evolved Gene Regulatory Network (GRN) to complete locomotion and object-manipulation tasks.
 
 For this research project, I used [EvoGym](https://evolutiongym.github.io/) to simulate Voxel-based Soft Robots (VSR). I also designed and implemented a developmental model and a decentralised controller in Python that uses a GRN to both design the robot's architecture and control its movements. In my application, populations of GRNs are evolved with an Evolutionary Algorithm, which I implemented with Python's multiprocessing library to take advantage of performing fitness evaluations in parallel on multiple CPU cores.
